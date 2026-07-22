@@ -98,6 +98,7 @@ class RunManager:
             result, metrics = await asyncio.wait_for(
                 runner.run(question, emit), timeout=self.settings.run_timeout_seconds
             )
+            result["reference_answer"] = question.reference_answer
             record.result = sanitize_payload(result)
             record.metrics = metrics
             await self._emit(record, EventType.RESULT, "completed", record.result)

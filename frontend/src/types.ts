@@ -56,6 +56,7 @@ export interface Metrics {
 
 export interface ResultPayload {
   answer?: string;
+  reference_answer?: string | null;
   answer_kind?: string;
   disclosure?: string;
   curated_document_ids?: string[];

@@ -3,7 +3,7 @@ import { MetricsStrip } from "./MetricsStrip";
 
 describe("MetricsStrip", () => {
   it("separates end-to-end, model, retrieval, throughput, and estimated cost", () => {
-    render(<MetricsStrip result={{ answer: "Phoenix New Times" }} metrics={{
+    render(<MetricsStrip result={{ answer: "HuffPost", reference_answer: "Phoenix New Times" }} metrics={{
       total_seconds: 18.42,
       time_to_first_action_seconds: 1.23,
       model_inference_seconds: 12,
@@ -15,7 +15,10 @@ describe("MetricsStrip", () => {
       estimated_cost_usd: 0.021,
       cost_basis: "estimate",
     }} />);
+    expect(screen.getByText("HuffPost")).toBeInTheDocument();
+    expect(screen.getByText("REFERENCE ANSWER")).toBeInTheDocument();
     expect(screen.getByText("Phoenix New Times")).toBeInTheDocument();
+    expect(screen.queryByText("FIRST ACTION")).not.toBeInTheDocument();
     expect(screen.getByText("MODEL / RETRIEVAL")).toBeInTheDocument();
     expect(screen.getByText("OUTPUT TOKENS / SEC")).toBeInTheDocument();
     expect(screen.getByText("$0.0210")).toBeInTheDocument();
