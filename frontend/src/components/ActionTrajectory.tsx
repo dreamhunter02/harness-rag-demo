@@ -1,10 +1,24 @@
+import { useEffect, useRef } from "react";
 import type { ActionStep } from "../types";
 
 export function ActionTrajectory({ actions, running }: { actions: ActionStep[]; running: boolean }) {
+  const trajectoryRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!running) return;
+    const trajectory = trajectoryRef.current;
+    if (!trajectory) return;
+    if (typeof trajectory.scrollTo === "function") {
+      trajectory.scrollTo({ top: trajectory.scrollHeight, behavior: "smooth" });
+    } else {
+      trajectory.scrollTop = trajectory.scrollHeight;
+    }
+  }, [actions, running]);
+
   return (
     <section className="workspace-panel trajectory-panel" aria-labelledby="trajectory-title">
       <h2 id="trajectory-title">ACTION TRAJECTORY</h2>
-      <div className="trajectory" aria-live="polite">
+      <div className="trajectory" aria-live="polite" ref={trajectoryRef} tabIndex={0}>
         {actions.length === 0 ? (
           <div className="empty-state">
             <span className="empty-line" />
