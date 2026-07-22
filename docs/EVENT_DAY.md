@@ -2,7 +2,7 @@
 
 ## Before travel
 
-1. Copy `.env.example` to `.env.local`, set `OPENAI_API_KEY`, and retain `HARNESS1_REMOTE_HOST=teamdgxa100`.
+1. Copy `.env.example` to `.env.local`, set `FRONTIER_API_KEY` and `EMBEDDING_API_KEY`, and retain `HARNESS1_REMOTE_HOST=teamdgxa100`.
 2. Verify passwordless access with `ssh -o BatchMode=yes teamdgxa100 hostname`.
 3. Build the local slice: `uv run python -m demo.build_corpus --distractors 20000 --seed 42`.
 4. Start the DGX vLLM service with `scripts/dgx/deploy.sh` and verify `scripts/dgx/health.sh`.
@@ -28,7 +28,7 @@
 ## Failure recovery
 
 - **Tunnel or vLLM unavailable:** run `scripts/dgx/tunnel.sh` in a separate terminal and `scripts/dgx/health.sh`; then retry or use replay.
-- **OpenAI error:** verify `OPENAI_API_KEY` and network access; use the matching replay if recovery would interrupt the talk.
+- **Inference Hub error:** verify `FRONTIER_API_KEY`, `EMBEDDING_API_KEY`, and network access; use the matching replay if recovery would interrupt the talk.
 - **Browser stream reconnect:** reload the page and rerun. The API supports event replay after a sequence cursor, and the UI deduplicates sequences.
 - **Hung run:** cancel it in the UI. The backend also enforces `RUN_TIMEOUT_SECONDS`.
 - **All live services unavailable:** use replay and keep the `DEMO REPLAY · NOT A LIVE MEASUREMENT` label visible.

@@ -11,7 +11,7 @@ export function HarnessState({ snapshot, system }: { snapshot: HarnessSnapshot; 
       {inactive ? (
         <div className="internal-message">
           <strong>State remains inside the model context.</strong>
-          <p>GPT‑4o uses the same search and read access without Harness‑1’s externalized working memory.</p>
+          <p>GPT‑4o mini uses the same search and read access without Harness‑1’s externalized working memory.</p>
           {snapshot.retrieved_document_count ? <span>{snapshot.retrieved_document_count} documents retrieved</span> : null}
         </div>
       ) : (

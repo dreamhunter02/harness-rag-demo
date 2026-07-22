@@ -56,14 +56,17 @@ class GPT4ORunner:
         self.settings = settings
 
     async def run(self, question: Question, emit: Emit) -> tuple[dict[str, Any], Metrics]:
-        if not self.settings.openai_api_key:
-            raise RuntimeError("OPENAI_API_KEY is required for GPT-4o live mode")
+        if not self.settings.resolved_frontier_api_key:
+            raise RuntimeError("FRONTIER_API_KEY or OPENAI_API_KEY is required for live mode")
         corpus = DemoCorpus(self.settings)
-        client = AsyncOpenAI(api_key=self.settings.openai_api_key)
+        client = AsyncOpenAI(
+            api_key=self.settings.resolved_frontier_api_key,
+            base_url=self.settings.frontier_base_url,
+        )
         telemetry = Telemetry(
             SystemId.GPT4O,
-            gpt4o_input_per_million=self.settings.gpt4o_input_per_million_usd,
-            gpt4o_output_per_million=self.settings.gpt4o_output_per_million_usd,
+            frontier_input_per_million=self.settings.frontier_input_per_million_usd,
+            frontier_output_per_million=self.settings.frontier_output_per_million_usd,
             pricing_effective_date=self.settings.pricing_effective_date,
         )
         telemetry.start()

@@ -185,7 +185,7 @@ class RunManager:
             "components": {
                 "corpus": {"ready": corpus_ready},
                 "harness1_vllm": {"ready": harness_ready, "url": root_url},
-                "gpt4o": {"ready": bool(self.settings.openai_api_key)},
+                "gpt4o": {"ready": bool(self.settings.resolved_frontier_api_key)},
                 "replays": {"ready": replays >= 6, "count": replays},
             },
         }

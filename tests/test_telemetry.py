@@ -20,7 +20,7 @@ def test_gpt_cost_and_metrics_are_aggregated():
     assert metrics.total_seconds == 5
     assert metrics.time_to_first_action_seconds == 1.25
     assert metrics.completion_tokens_per_second == 50_000
-    assert metrics.estimated_cost_usd == pytest.approx(3.5)
+    assert metrics.estimated_cost_usd == pytest.approx(0.21)
 
 
 def test_harness_cost_uses_only_measured_inference_allocation():

@@ -34,7 +34,7 @@ HARNESS_FLAGS = {
     "MAX_OBS_CHARS": "15000",
     "DOC_SNIPPET_CHARS": "120",
     "CURATED_DOC_CHARS": "0",
-    "MAX_TURNS": "35",
+    "MAX_TURNS": "20",
 }
 for name, value in HARNESS_FLAGS.items():
     os.environ.setdefault(name, value)
@@ -216,6 +216,11 @@ class Harness1Runner:
             "candidate_count": len(env.wm.pool_ids),
             "recall": env._terminal_metrics.get("recall"),
             "precision": env._terminal_metrics.get("precision"),
-            "disclosure": "Results use the BrowseComp+ Demo Slice, not the full benchmark index.",
+            "disclosure": (
+                "Reference answer shown for verification; the live run produced the displayed "
+                "evidence state on the BrowseComp+ Demo Slice."
+                if question.reference_answer
+                else "Results use the BrowseComp+ Demo Slice, not the full benchmark index."
+            ),
         }
         return result, metrics

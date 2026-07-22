@@ -1,6 +1,6 @@
 # Harness-1 Live Search Demo
 
-Presentation demo comparing Harness-1 20B running behind a state-externalizing retrieval harness with a GPT-4o search baseline.
+Presentation demo comparing Harness-1 20B running behind a state-externalizing retrieval harness with a GPT-4o mini search baseline.
 
 The local laptop hosts the UI, API, retrieval index, and harness state. A team DGX A100 serves only the Harness-1 checkpoint through vLLM.
 
@@ -8,7 +8,7 @@ The local laptop hosts the UI, API, retrieval index, and harness state. A team D
 
 - **Laptop:** FastAPI, React, the pinned Harness-1 runtime, hybrid Chroma/BM25 retrieval, telemetry, and SSE streaming.
 - **Team DGX A100:** only the `pat-jj/harness-1` 20B checkpoint behind vLLM's raw token-ID completion endpoint.
-- **OpenAI:** GPT-4o baseline and `text-embedding-3-small` corpus/query vectors.
+- **NVIDIA Inference Hub:** GPT-4o mini baseline and OpenAI-compatible `text-embedding-3-small` corpus/query vectors.
 
 The UI shows public actions and Harness state changes, never private reasoning or chain-of-thought. Results are labeled **BrowseComp+ Demo Slice** and are not full benchmark scores.
 
@@ -20,9 +20,10 @@ Requirements: Python 3.11+, `uv`, Node.js, `pnpm`, passwordless SSH to `teamdgxa
 git submodule update --init --recursive
 cp .env.example .env.local
 # Add credentials and instance configuration to .env.local.
+# Set FRONTIER_API_KEY and EMBEDDING_API_KEY to an Inference Hub virtual key.
 uv sync --group dev
 pnpm --dir frontend install --frozen-lockfile
-uv run python -m demo.build_corpus --distractors 20000 --seed 42
+scripts/build_corpus.sh
 ```
 
 Never commit `.env` or `.env.local`. Start the production UI and API on one local origin with:
@@ -45,4 +46,4 @@ pnpm --dir frontend run build
 
 See [PLAN.md](PLAN.md), [DGX setup](docs/DGX.md), and the [event-day runbook](docs/EVENT_DAY.md).
 
-GPT-4o standard token pricing is dated in `.env.example` and was verified on 2026-07-21 against the official model page. Harness cost uses the configured accelerator rate and allocates only measured model-inference time; the UI notes that idle time, warm-up, storage, and other charges are excluded.
+GPT-4o mini reference token pricing is dated in `.env.example`; actual internal Inference Hub accounting may differ. Harness cost uses the configured accelerator rate and allocates only measured model-inference time. The UI labels all costs as estimates.

@@ -10,8 +10,8 @@ from demo.models import Metrics, SystemId
 class Telemetry:
     system: SystemId
     harness_hourly_usd: float = 0
-    gpt4o_input_per_million: float = 2.50
-    gpt4o_output_per_million: float = 10.00
+    frontier_input_per_million: float = 0.15
+    frontier_output_per_million: float = 0.60
     pricing_effective_date: str = "2026-07-21"
     started_at: float = 0
     first_action_at: float | None = None
@@ -38,10 +38,10 @@ class Telemetry:
         )
         if self.system == SystemId.GPT4O:
             cost = (
-                self.prompt_tokens * self.gpt4o_input_per_million
-                + self.completion_tokens * self.gpt4o_output_per_million
+                self.prompt_tokens * self.frontier_input_per_million
+                + self.completion_tokens * self.frontier_output_per_million
             ) / 1_000_000
-            basis = f"GPT-4o standard token rates configured {self.pricing_effective_date}."
+            basis = f"Frontier-model token rates configured {self.pricing_effective_date}."
         else:
             cost = self.harness_hourly_usd * self.model_seconds / 3600
             basis = (

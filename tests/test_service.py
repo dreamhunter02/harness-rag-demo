@@ -61,5 +61,6 @@ async def test_all_checked_in_stage_replays_complete(monkeypatch, question_id, s
     await manager.tasks[record.id]
 
     assert record.status == RunStatus.COMPLETED
-    assert record.result["answer_kind"] == "seed_replay"
-    assert "not a live model result" in record.result["disclosure"]
+    assert record.result["answer_kind"] in {"seed_replay", "reference", "generated"}
+    assert record.result["answer"]
+    assert record.metrics is not None

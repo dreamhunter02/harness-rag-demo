@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import json
 import re
+import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass
 from time import perf_counter
 from typing import Any, Iterable
+from urllib.error import HTTPError, URLError
 
 import chromadb
 from openai import OpenAI
@@ -51,7 +54,10 @@ class DemoCorpus:
         self.bm25 = BM25Okapi([tokenize(doc.text) for doc in self.documents])
         self.chroma = chromadb.PersistentClient(path=str(settings.chroma_dir))
         self.collection = self.chroma.get_collection(COLLECTION_NAME)
-        self.openai = OpenAI(api_key=settings.openai_api_key)
+        self.openai = OpenAI(
+            api_key=settings.resolved_embedding_api_key,
+            base_url=settings.embedding_base_url,
+        )
 
     def search(self, query: str, limit: int = 10, ignore_ids: Iterable[str] = ()) -> list[CorpusDocument]:
         ignored = set(ignore_ids)
@@ -102,10 +108,16 @@ def _fetch_sft_rows(limit: int = 12) -> list[dict[str, Any]]:
                 "length": 100,
             }
         )
-        with urllib.request.urlopen(
-            f"https://datasets-server.huggingface.co/rows?{params}", timeout=180
-        ) as response:
-            page = json.load(response)
+        url = f"https://datasets-server.huggingface.co/rows?{params}"
+        for attempt in range(5):
+            try:
+                with urllib.request.urlopen(url, timeout=180) as response:
+                    page = json.load(response)
+                break
+            except (HTTPError, URLError, TimeoutError):
+                if attempt == 4:
+                    raise
+                time.sleep(2**attempt)
         for item in page.get("rows", []):
             row = item["row"]
             if row.get("stage") == "sft" and row.get("dataset_name") == "browsecompplus":
@@ -158,8 +170,8 @@ def _stream_distractors(limit: int, seed: int) -> Iterable[CorpusDocument]:
 
 
 def build_corpus(settings: Settings, distractor_count: int = 20_000, seed: int = 42) -> dict[str, Any]:
-    if not settings.openai_api_key:
-        raise RuntimeError("OPENAI_API_KEY is required to build dense embeddings")
+    if not settings.resolved_embedding_api_key:
+        raise RuntimeError("EMBEDDING_API_KEY or OPENAI_API_KEY is required to build embeddings")
     rows = _fetch_sft_rows(12)
     documents = _trajectory_documents(rows)
     for document in _stream_distractors(distractor_count, seed):
@@ -168,8 +180,9 @@ def build_corpus(settings: Settings, distractor_count: int = 20_000, seed: int =
     settings.corpus_dir.mkdir(parents=True, exist_ok=True)
     settings.chroma_dir.mkdir(parents=True, exist_ok=True)
     manifest = settings.corpus_dir / "documents.jsonl"
+    pending_manifest = settings.corpus_dir / "documents.jsonl.pending"
     ordered = [documents[key] for key in sorted(documents)]
-    with manifest.open("w", encoding="utf-8") as output:
+    with pending_manifest.open("w", encoding="utf-8") as output:
         for document in ordered:
             output.write(json.dumps(asdict(document), ensure_ascii=False, default=str) + "\n")
 
@@ -179,22 +192,38 @@ def build_corpus(settings: Settings, distractor_count: int = 20_000, seed: int =
     except Exception:
         pass
     collection = client.create_collection(COLLECTION_NAME)
-    openai = OpenAI(api_key=settings.openai_api_key)
     batch_size = 128
-    started = perf_counter()
-    for start in range(0, len(ordered), batch_size):
-        batch = ordered[start : start + batch_size]
-        response = openai.embeddings.create(
+    batches = [ordered[start : start + batch_size] for start in range(0, len(ordered), batch_size)]
+
+    def embed_batch(batch: list[CorpusDocument]):
+        client = OpenAI(
+            api_key=settings.resolved_embedding_api_key,
+            base_url=settings.embedding_base_url,
+            max_retries=5,
+            timeout=180,
+        )
+        response = client.embeddings.create(
             model=settings.openai_embedding_model,
             input=[item.text for item in batch],
             encoding_format="float",
         )
-        collection.add(
-            ids=[item.chunk_id for item in batch],
-            documents=[item.text for item in batch],
-            metadatas=[{"source": item.source, **item.metadata} for item in batch],
-            embeddings=[item.embedding for item in response.data],
-        )
+        return batch, [item.embedding for item in response.data]
+
+    started = perf_counter()
+    completed = 0
+    with ThreadPoolExecutor(max_workers=max(1, settings.embedding_concurrency)) as executor:
+        for batch, embeddings in executor.map(embed_batch, batches):
+            collection.add(
+                ids=[item.chunk_id for item in batch],
+                documents=[item.text for item in batch],
+                metadatas=[{"source": item.source, **item.metadata} for item in batch],
+                embeddings=embeddings,
+            )
+            completed += len(batch)
+            if completed % 1024 == 0 or completed == len(ordered):
+                print(f"Embedded {completed}/{len(ordered)} documents", flush=True)
+
+    pending_manifest.replace(manifest)
 
     candidates = settings.corpus_dir / "candidate_questions.json"
     candidates.write_text(
