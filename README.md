@@ -4,6 +4,26 @@ Presentation demo comparing Harness-1 20B running behind a state-externalizing r
 
 The local laptop hosts the UI, API, retrieval index, and harness state. A team DGX A100 serves only the Harness-1 checkpoint through vLLM.
 
+## Demo walkthrough
+
+### Ready
+
+Choose one of the prevalidated BrowseComp+ Demo Slice questions and either Harness-1 20B or GPT-4o mini.
+
+![Harness-1 demo ready to run](docs/screenshots/demo-ready.png)
+
+### Live research
+
+The action trajectory streams alongside the externalized candidate pool, evidence graph, curated set, verification, and compressed working state.
+
+![Harness-1 live research trajectory and state](docs/screenshots/demo-live-run.png)
+
+### Verified result
+
+The completed view preserves the full trajectory and evidence links, then shows the generated answer beside the hidden benchmark reference and measured run telemetry.
+
+![Harness-1 verified result and telemetry](docs/screenshots/demo-completed.png)
+
 ## Architecture
 
 - **Laptop:** FastAPI, React, the pinned Harness-1 runtime, hybrid Chroma/BM25 retrieval, telemetry, and SSE streaming.
