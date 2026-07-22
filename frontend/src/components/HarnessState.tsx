@@ -40,11 +40,24 @@ export function HarnessState({
         </div>
       ) : (
         <div className="state-grid" aria-live="polite">
-          <StateCell title="candidate pool" active={Boolean(snapshot.candidate_pool?.length)}>
+          <StateCell title="candidate pool" placement="candidate" active={Boolean(snapshot.candidate_pool?.length)}>
             <DocumentList items={snapshot.candidate_pool?.map((item) => item.id) ?? []} />
             <CellCount count={snapshot.candidate_pool?.length ?? 0} noun="candidate" />
           </StateCell>
-          <StateCell title="curated set" active={Boolean(snapshot.curated_set?.length)} featured>
+          <StateCell title="evidence graph" placement="graph" active={Boolean(snapshot.evidence_graph?.length)}>
+            <ul className="graph-list">
+              {snapshot.evidence_graph?.map((item) => (
+                <li key={item.entity}>
+                  <div className="graph-entity"><strong>{item.entity}</strong><small>{item.document_ids.length} link{item.document_ids.length === 1 ? "" : "s"}</small></div>
+                  <div className="graph-documents" aria-label={`Documents linked to ${item.entity}`}>
+                    {item.document_ids.map((documentId) => <span key={documentId}>DOC {documentId}</span>)}
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <CellCount count={snapshot.evidence_graph?.length ?? 0} noun="entity" />
+          </StateCell>
+          <StateCell title="curated set" placement="curated" active={Boolean(snapshot.curated_set?.length)} featured>
             <ul className="document-list">
               {snapshot.curated_set?.map((item) => (
                 <li key={item.id}><span>{item.id}</span><em>{item.importance ?? "fair"}</em></li>
@@ -52,15 +65,7 @@ export function HarnessState({
             </ul>
             <CellCount count={snapshot.curated_set?.length ?? 0} noun="curated" />
           </StateCell>
-          <StateCell title="evidence graph" active={Boolean(snapshot.evidence_graph?.length)}>
-            <ul className="graph-list">
-              {snapshot.evidence_graph?.map((item) => (
-                <li key={item.entity}><span>{item.entity}</span><small>{item.document_ids.length} links</small></li>
-              ))}
-            </ul>
-            <CellCount count={snapshot.evidence_graph?.length ?? 0} noun="bridge" />
-          </StateCell>
-          <StateCell title="verification" active={Boolean(snapshot.verification?.length)}>
+          <StateCell title="verification" placement="verification" active={Boolean(snapshot.verification?.length)}>
             <ul className="verification-list">
               {snapshot.verification?.map((item, index) => (
                 <li key={`${item.claim}-${index}`}><span className="check">✓</span>{item.claim}</li>
@@ -68,12 +73,9 @@ export function HarnessState({
             </ul>
             <CellCount count={snapshot.verification?.length ?? 0} noun="check" />
           </StateCell>
-          <StateCell title="compression" active={Boolean(snapshot.compression?.latest_summary)}>
+          <StateCell title="compression" placement="compression" active={Boolean(snapshot.compression?.latest_summary)}>
             <p className="compression-copy">{snapshot.compression?.latest_summary || "Waiting for a result summary."}</p>
             <span className="cell-foot">{snapshot.compression?.deduplicated ?? 0} duplicates removed</span>
-          </StateCell>
-          <StateCell title="budget render" active={Boolean(snapshot.budget_render?.used_tokens)}>
-            <Budget used={snapshot.budget_render?.used_tokens ?? 0} limit={snapshot.budget_render?.limit_tokens ?? 32268} />
           </StateCell>
         </div>
       )}
@@ -81,9 +83,9 @@ export function HarnessState({
   );
 }
 
-function StateCell({ title, active, featured, children }: { title: string; active: boolean; featured?: boolean; children: React.ReactNode }) {
+function StateCell({ title, placement, active, featured, children }: { title: string; placement: string; active: boolean; featured?: boolean; children: React.ReactNode }) {
   return (
-    <article className={`state-cell ${active ? "populated" : ""} ${featured ? "featured" : ""}`}>
+    <article className={`state-cell state-${placement} ${active ? "populated" : ""} ${featured ? "featured" : ""}`}>
       <h3>{title}</h3>
       <div className="state-cell-content" tabIndex={0}>{children}</div>
     </article>
@@ -96,9 +98,4 @@ function DocumentList({ items }: { items: string[] }) {
 
 function CellCount({ count, noun }: { count: number; noun: string }) {
   return <span className="cell-foot">{count} {noun}{count === 1 ? "" : "s"}</span>;
-}
-
-function Budget({ used, limit }: { used: number; limit: number }) {
-  const percentage = Math.min(100, Math.round((used / Math.max(limit, 1)) * 100));
-  return <div className="budget"><strong>{used.toLocaleString()} / {limit.toLocaleString()}</strong><div className="budget-track"><span style={{ width: `${percentage}%` }} /></div><span className="cell-foot">{percentage}% used</span></div>;
 }

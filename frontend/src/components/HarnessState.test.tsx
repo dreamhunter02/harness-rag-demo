@@ -8,11 +8,14 @@ describe("HarnessState", () => {
     expect(screen.getByText("State remains inside the model context.")).toBeInTheDocument();
   });
 
-  it("renders all six externalized state contracts", () => {
-    render(<HarnessState system="harness1" snapshot={{ turn: 2 }} />);
-    for (const label of ["candidate pool", "curated set", "evidence graph", "verification", "compression", "budget render"]) {
+  it("renders the five presentation state contracts without budget render", () => {
+    render(<HarnessState system="harness1" snapshot={{ turn: 2, evidence_graph: [{ entity: "Hatpin", document_ids: ["34889", "73556"] }] }} />);
+    for (const label of ["candidate pool", "evidence graph", "curated set", "verification", "compression"]) {
       expect(screen.getByText(label)).toBeInTheDocument();
     }
+    expect(screen.queryByText("budget render")).not.toBeInTheDocument();
+    expect(screen.getByText("DOC 34889")).toBeInTheDocument();
+    expect(screen.getByText("DOC 73556")).toBeInTheDocument();
   });
 
   it("offers previous and next turn navigation", () => {
