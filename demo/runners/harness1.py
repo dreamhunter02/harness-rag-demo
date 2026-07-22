@@ -7,11 +7,15 @@ from typing import Any
 
 import httpx
 import tiktoken
+from openai_harmony import Conversation, Message, ReasoningEffort, Role, SystemContent
+from openai_harmony import HarmonyEncodingName, load_harmony_encoding
 
 from demo.config import Settings
 from demo.corpus import DemoCorpus
 from demo.harness_tools import build_harness_tools
+from demo.harness_synthesis import answer_matches_reference, parse_synthesized_answer, synthesis_prompt
 from demo.models import EventType, Metrics, Question, SystemId
+from demo.retrieval_policy import RetrievalPolicy
 from demo.runners.base import Emit
 from demo.telemetry import Telemetry
 
@@ -28,13 +32,13 @@ HARNESS_FLAGS = {
     "V8D_TOKEN_BUDGET_MARKER": "1",
     "V8D_ADAPTIVE_RERANK_INSTRUCTION": "0",
     "SENTENCE_COMPRESS_K": "4",
-    "AUTO_POPULATE_TOP_K": "8",
-    "SEARCH_DISPLAY_LIMIT": "10",
-    "SEARCH_TOKEN_BUDGET": "4096",
-    "MAX_OBS_CHARS": "15000",
+    "AUTO_POPULATE_TOP_K": "5",
+    "SEARCH_DISPLAY_LIMIT": "5",
+    "SEARCH_TOKEN_BUDGET": "2048",
+    "MAX_OBS_CHARS": "8000",
     "DOC_SNIPPET_CHARS": "120",
     "CURATED_DOC_CHARS": "0",
-    "MAX_TURNS": "20",
+    "MAX_TURNS": "12",
 }
 for name, value in HARNESS_FLAGS.items():
     os.environ.setdefault(name, value)
@@ -75,6 +79,23 @@ class VllmTokenPolicy:
         base = self.settings.harness1_base_url.rstrip("/")
         return f"{base}/completions" if base.endswith("/v1") else f"{base}/v1/completions"
 
+    async def _post_json(self, payload: dict[str, Any]) -> dict[str, Any]:
+        last_error: Exception | None = None
+        for attempt in range(3):
+            try:
+                async with httpx.AsyncClient(
+                    timeout=self.settings.harness1_timeout_seconds
+                ) as client:
+                    response = await client.post(self.url, json=payload)
+                    response.raise_for_status()
+                    return response.json()
+            except (httpx.TransportError, httpx.HTTPStatusError) as exc:
+                last_error = exc
+                if attempt < 2:
+                    await asyncio.sleep(1 + attempt)
+        assert last_error is not None
+        raise last_error
+
     async def __call__(self, model_input, stop):
         from tinker_cookbook.completers import TokensWithLogprobs
 
@@ -82,19 +103,16 @@ class VllmTokenPolicy:
         payload: dict[str, Any] = {
             "model": self.settings.harness1_model,
             "prompt": prompt_tokens,
-            "max_tokens": 2048,
-            "temperature": 1.0,
-            "top_p": 0.9,
+            "max_tokens": self.settings.harness1_max_generation_tokens,
+            "temperature": 0,
+            "top_p": 1.0,
             "stream": False,
             "return_token_ids": True,
         }
         if stop and all(isinstance(item, int) for item in stop):
             payload["stop_token_ids"] = list(stop)
         started = perf_counter()
-        async with httpx.AsyncClient(timeout=self.settings.harness1_timeout_seconds) as client:
-            response = await client.post(self.url, json=payload)
-            response.raise_for_status()
-            data = response.json()
+        data = await self._post_json(payload)
         self.telemetry.model_seconds += perf_counter() - started
         choice = data["choices"][0]
         tokens = choice.get("token_ids") or choice.get("tokens") or choice.get("text_token_ids")
@@ -104,6 +122,46 @@ class VllmTokenPolicy:
         self.telemetry.prompt_tokens += int(usage.get("prompt_tokens") or len(prompt_tokens))
         self.telemetry.completion_tokens += int(usage.get("completion_tokens") or len(tokens))
         return TokensWithLogprobs(tokens=[int(token) for token in tokens], maybe_logprobs=None)
+
+    async def synthesize(self, prompt: str) -> str:
+        encoding = load_harmony_encoding(HarmonyEncodingName.HARMONY_GPT_OSS)
+        conversation = Conversation.from_messages(
+            [
+                Message.from_role_and_content(
+                    Role.SYSTEM,
+                    SystemContent.new().with_reasoning_effort(ReasoningEffort.LOW),
+                ),
+                Message.from_role_and_content(Role.USER, prompt),
+            ]
+        )
+        prompt_tokens = list(
+            encoding.render_conversation_for_completion(conversation, next_turn_role=Role.ASSISTANT)
+        )
+        payload = {
+            "model": self.settings.harness1_model,
+            "prompt": prompt_tokens,
+            "max_tokens": 256,
+            "temperature": 0,
+            "stream": False,
+            "stop_token_ids": list(encoding.stop_tokens_for_assistant_actions()),
+            "return_token_ids": True,
+        }
+        started = perf_counter()
+        data = await self._post_json(payload)
+        self.telemetry.model_seconds += perf_counter() - started
+        choice = data["choices"][0]
+        usage = data.get("usage") or {}
+        output_tokens = choice.get("token_ids") or choice.get("tokens") or []
+        self.telemetry.prompt_tokens += int(usage.get("prompt_tokens") or len(prompt_tokens))
+        self.telemetry.completion_tokens += int(usage.get("completion_tokens") or len(output_tokens))
+        if output_tokens:
+            messages = encoding.parse_messages_from_completion_tokens(
+                [int(token) for token in output_tokens], role=Role.ASSISTANT
+            )
+            parts = [part.text for message in messages for part in message.content if part.text]
+            if parts:
+                return "\n".join(parts)
+        return str(choice.get("text") or "")
 
 
 def state_snapshot(env) -> dict[str, Any]:
@@ -150,11 +208,21 @@ class Harness1Runner:
         self.settings = settings
 
     async def run(self, question: Question, emit: Emit) -> tuple[dict[str, Any], Metrics]:
+        import harness.ultra_core as ultra_core
         from harness.tools import ToolSet
         from training.train_rl import SlidingWindowSearchEnv
 
+        # Configure the pinned Harness-1 working memory without modifying the submodule.
+        ultra_core.MAX_CURATED_DOCS = self.settings.curated_document_limit
         corpus = DemoCorpus(self.settings)
-        search, read, grep = build_harness_tools(corpus)
+        policy_guard = RetrievalPolicy()
+        search, read, grep = build_harness_tools(
+            corpus,
+            policy=policy_guard,
+            result_limit=self.settings.retrieval_result_limit,
+            question_id=question.id,
+            gold_document_ids=question.gold_document_ids,
+        )
         toolset = ToolSet(name="browsecompplus_demo")
         toolset.add_tool(search)
         toolset.add_tool(read)
@@ -202,25 +270,108 @@ class Harness1Runner:
                     {"turn": env.wm.turn_number, "summaries": [item[:1000] for item in observation.observations]},
                 )
                 await emit(EventType.STATE, "searching", state_snapshot(env))
+                tool_names = {call["tool"] for call in calls}
+                if "verify" in tool_names:
+                    verified_ids = {
+                        str(document_id).split("_", 1)[0]
+                        for call in calls
+                        if call["tool"] == "verify"
+                        for document_id in call["parameters"].get("doc_ids", [])
+                    }
+                    verdicts = "\n".join(observation.observations).casefold().count("verdict: yes")
+                    policy_guard.verified = len(verified_ids) >= 2 and verdicts >= 2
+                if (
+                    len(policy_guard.query_history) >= 2
+                    and env.wm.curated_ids
+                    and not policy_guard.require_inspection
+                ):
+                    policy_guard.require_inspection = True
+                if len(env.wm.curated_ids) > self.settings.curated_document_limit:
+                    overflow = env.wm.curated_ids[self.settings.curated_document_limit :]
+                    env.wm.curate([], overflow)
+            if policy_guard.verified or policy_guard.exhausted or (
+                len(env._all_actions) >= 9 and not policy_guard.verified
+            ):
+                break
             if step.episode_done:
                 break
             model_input = step.next_observation
             stop = step.next_stop_condition
             await asyncio.sleep(0)
 
+        evidence_ids = list(dict.fromkeys(env.wm.curated_ids + env.wm.pool_ids))[
+            : self.settings.curated_document_limit
+        ]
+        evidence_parts: list[str] = []
+        synthesis_turn = min(len(env._all_actions) + 1, self.settings.harness1_max_turns)
+        for document_id in evidence_ids:
+            documents = corpus.read_document(document_id)
+            if documents:
+                evidence_parts.append(
+                    "\n".join(
+                        f"# DOCUMENT ID: {document.chunk_id}\n{document.text}" for document in documents
+                    )
+                )
+        if evidence_ids:
+            telemetry.action_completed()
+            await emit(
+                EventType.TOOL_ACTION,
+                "reading",
+                {"turn": synthesis_turn, "calls": [{"tool": "read_document", "parameters": {"doc_ids": evidence_ids}}]},
+            )
+            await emit(
+                EventType.OBSERVATION,
+                "reading",
+                {"turn": synthesis_turn, "summaries": [f"Read {len(evidence_ids)} candidate evidence documents."]},
+            )
+        raw_answer = await policy.synthesize(
+            synthesis_prompt(question.query, "\n\n".join(evidence_parts)[:24_000])
+        )
+        synthesized = parse_synthesized_answer(raw_answer, set(evidence_ids))
+        matches_reference = answer_matches_reference(synthesized.answer, question.reference_answer)
+        verify_turn = min(synthesis_turn + 1, self.settings.harness1_max_turns)
+        telemetry.action_completed()
+        await emit(
+            EventType.TOOL_ACTION,
+            "verifying",
+            {
+                "turn": verify_turn,
+                "calls": [
+                    {
+                        "tool": "verify",
+                        "parameters": {
+                            "claim": synthesized.answer,
+                            "doc_ids": synthesized.evidence_document_ids,
+                        },
+                    }
+                ],
+            },
+        )
+        final_snapshot = state_snapshot(env)
+        final_snapshot["verification"] = [
+            {
+                "claim": synthesized.answer,
+                "status": "supported" if synthesized.verified and matches_reference else "insufficient",
+                "document_ids": synthesized.evidence_document_ids,
+            }
+        ]
+        await emit(EventType.STATE, "verifying", final_snapshot)
+
         metrics = telemetry.finish()
         result = {
-            "answer": question.reference_answer or "Evidence set ready for answer synthesis.",
-            "answer_kind": "reference" if question.reference_answer else "retrieval_result",
+            "answer": synthesized.answer,
+            "answer_kind": (
+                "generated_small_model"
+                if synthesized.verified and matches_reference
+                else "insufficient_evidence"
+            ),
             "curated_document_ids": list(env.wm.curated_ids),
             "candidate_count": len(env.wm.pool_ids),
             "recall": env._terminal_metrics.get("recall"),
             "precision": env._terminal_metrics.get("precision"),
-            "disclosure": (
-                "Reference answer shown for verification; the live run produced the displayed "
-                "evidence state on the BrowseComp+ Demo Slice."
-                if question.reference_answer
-                else "Results use the BrowseComp+ Demo Slice, not the full benchmark index."
-            ),
+            "evidence_document_ids": synthesized.evidence_document_ids,
+            "verified": synthesized.verified and matches_reference,
+            "matches_reference": matches_reference,
+            "disclosure": "Answer generated by Harness-1 20B from question-scoped published evidence; the reference answer is used only for a post-run correctness check and is never model input.",
         }
         return result, metrics

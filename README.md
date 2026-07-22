@@ -10,7 +10,7 @@ The local laptop hosts the UI, API, retrieval index, and harness state. A team D
 - **Team DGX A100:** only the `pat-jj/harness-1` 20B checkpoint behind vLLM's raw token-ID completion endpoint.
 - **NVIDIA Inference Hub:** GPT-4o mini baseline and OpenAI-compatible `text-embedding-3-small` corpus/query vectors.
 
-The UI shows public actions and Harness state changes, never private reasoning or chain-of-thought. Results are labeled **BrowseComp+ Demo Slice** and are not full benchmark scores.
+The UI shows public actions and Harness state changes, never private reasoning or chain-of-thought. Each selected question searches a disclosed slice containing its published gold-evidence documents plus deterministic distractors. Results are capability demonstrations labeled **BrowseComp+ Demo Slice**, not full benchmark scores.
 
 ## Local setup
 
@@ -32,7 +32,13 @@ Never commit `.env` or `.env.local`. Start the production UI and API on one loca
 scripts/demo.sh
 ```
 
-Then open `http://127.0.0.1:8787`. The six checked-in recovery fixtures are deterministic and explicitly labeled as non-live. Each successful live run automatically replaces the corresponding fixture.
+Then open `http://127.0.0.1:8787`. The four checked-in recovery fixtures cover both systems on both selected questions and are explicitly labeled as non-live. Each successful live run automatically replaces the corresponding fixture.
+
+Prevalidate the complete live matrix twice before the event:
+
+```bash
+uv run python scripts/prevalidate_demo.py --rounds 2
+```
 
 ## Verification
 

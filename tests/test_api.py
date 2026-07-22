@@ -13,7 +13,7 @@ def test_health_and_questions_contracts():
     assert health.status_code == 200
     assert set(health.json()["components"]) == {"corpus", "harness1_vllm", "gpt4o", "replays"}
     assert questions.status_code == 200
-    assert len(questions.json()) == 3
+    assert len(questions.json()) == 2
     assert all(item["benchmark"] == "BrowseComp+ Demo Slice" for item in questions.json())
 
 

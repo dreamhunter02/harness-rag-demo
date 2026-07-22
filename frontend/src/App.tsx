@@ -155,7 +155,14 @@ export default function App() {
         )}
       </section>
 
-      <div className="query-line"><span>{selectedQuestion?.benchmark ?? "BrowseComp+ Demo Slice"}</span><p>{selectedQuestion?.query}</p></div>
+      <details className="question-card" open>
+        <summary>
+          <span>FULL QUESTION</span>
+          <small>{selectedQuestion?.benchmark ?? "BrowseComp+ Demo Slice"}</small>
+          <b aria-hidden="true">COLLAPSE</b>
+        </summary>
+        <p>{selectedQuestion?.query}</p>
+      </details>
 
       {error ? (
         <aside className="error-bar" role="alert">
@@ -170,7 +177,7 @@ export default function App() {
       </section>
 
       <MetricsStrip result={result} metrics={metrics} />
-      <footer><span>{status.toUpperCase()}</span><span>Results use a disclosed curated demo slice · Costs are estimates</span></footer>
+      <footer><span>{status.toUpperCase()}</span><span>Published gold-evidence demo slice + distractors · Not a benchmark score · Costs are estimates</span></footer>
     </main>
   );
 }

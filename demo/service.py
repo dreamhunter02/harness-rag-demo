@@ -16,7 +16,7 @@ from demo.models import (
     RunStatus,
     SystemId,
 )
-from demo.questions import get_question
+from demo.questions import get_question, load_questions
 from demo.runners.gpt4o import GPT4ORunner
 from demo.runners.harness1 import Harness1Runner
 from demo.runners.replay import ReplayRunner
@@ -180,12 +180,17 @@ class RunManager:
             pass
         corpus_ready = (self.settings.corpus_dir / "documents.jsonl").exists()
         replays = len(list(self.settings.demo_replay_dir.glob("*.jsonl")))
+        expected_replays = len(load_questions()) * 2
         return {
-            "status": "ready" if corpus_ready and replays >= 6 else "degraded",
+            "status": "ready" if corpus_ready and replays >= expected_replays else "degraded",
             "components": {
                 "corpus": {"ready": corpus_ready},
                 "harness1_vllm": {"ready": harness_ready, "url": root_url},
                 "gpt4o": {"ready": bool(self.settings.resolved_frontier_api_key)},
-                "replays": {"ready": replays >= 6, "count": replays},
+                "replays": {
+                    "ready": replays >= expected_replays,
+                    "count": replays,
+                    "expected": expected_replays,
+                },
             },
         }

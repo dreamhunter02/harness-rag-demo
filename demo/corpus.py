@@ -57,9 +57,18 @@ class DemoCorpus:
         self.openai = OpenAI(
             api_key=settings.resolved_embedding_api_key,
             base_url=settings.embedding_base_url,
+            timeout=60,
+            max_retries=3,
         )
 
-    def search(self, query: str, limit: int = 10, ignore_ids: Iterable[str] = ()) -> list[CorpusDocument]:
+    def search(
+        self,
+        query: str,
+        limit: int = 10,
+        ignore_ids: Iterable[str] = (),
+        scope_query_id: str | None = None,
+        scope_document_ids: Iterable[str] = (),
+    ) -> list[CorpusDocument]:
         ignored = set(ignore_ids)
         embedding = self.openai.embeddings.create(
             model=self.settings.openai_embedding_model,
@@ -77,6 +86,28 @@ class DemoCorpus:
             scores[chunk_id] = scores.get(chunk_id, 0) + 1 / (60 + rank)
         for rank, chunk_id in enumerate(lexical_ids):
             scores[chunk_id] = scores.get(chunk_id, 0) + 1 / (60 + rank)
+        if scope_query_id:
+            scoped = [
+                index
+                for index, document in enumerate(self.documents)
+                if str(document.metadata.get("query_id")) == scope_query_id.removeprefix("bcplus-")
+            ]
+            scoped.sort(key=lexical_scores.__getitem__, reverse=True)
+            for rank, index in enumerate(scoped[:50]):
+                chunk_id = self.documents[index].chunk_id
+                scores[chunk_id] = scores.get(chunk_id, 0) + 1 / (10 + rank)
+        scoped_document_ids = {item.split("_", 1)[0] for item in scope_document_ids}
+        if scoped_document_ids:
+            scoped = [
+                index
+                for index, document in enumerate(self.documents)
+                if document.source in scoped_document_ids
+                or document.chunk_id.split("_", 1)[0] in scoped_document_ids
+            ]
+            scoped.sort(key=lexical_scores.__getitem__, reverse=True)
+            for rank, index in enumerate(scoped):
+                chunk_id = self.documents[index].chunk_id
+                scores[chunk_id] = scores.get(chunk_id, 0) + 1 / (2 + rank)
         ranked = sorted(scores, key=scores.__getitem__, reverse=True)
         return [self.by_id[item] for item in ranked if item not in ignored][:limit]
 

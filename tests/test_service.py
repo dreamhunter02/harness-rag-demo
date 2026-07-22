@@ -21,10 +21,10 @@ def write_replay(path):
 async def test_replay_event_order_and_sse_reconnect_cursor(tmp_path):
     replay_dir = tmp_path / "replays"
     replay_dir.mkdir()
-    write_replay(replay_dir / "bcplus-100-harness1.jsonl")
+    write_replay(replay_dir / "bcplus-1023-harness1.jsonl")
     manager = RunManager(Settings(demo_replay_dir=replay_dir, run_timeout_seconds=5))
 
-    record = await manager.create(RunRequest(question_id="bcplus-100", system="harness1", mode="replay"))
+    record = await manager.create(RunRequest(question_id="bcplus-1023", system="harness1", mode="replay"))
     await manager.tasks[record.id]
 
     assert record.status == RunStatus.COMPLETED
@@ -41,7 +41,7 @@ async def test_cancellation_sets_terminal_state(monkeypatch, tmp_path):
 
     monkeypatch.setattr("demo.runners.replay.ReplayRunner.run", slow_run)
     manager = RunManager(Settings(demo_replay_dir=tmp_path, run_timeout_seconds=120))
-    record = await manager.create(RunRequest(question_id="bcplus-100", system="harness1", mode="replay"))
+    record = await manager.create(RunRequest(question_id="bcplus-1023", system="harness1", mode="replay"))
     await asyncio.sleep(0)
     await manager.cancel(record.id)
 
@@ -49,7 +49,7 @@ async def test_cancellation_sets_terminal_state(monkeypatch, tmp_path):
     assert record.events[-1].payload["status"] == "cancelled"
 
 
-@pytest.mark.parametrize("question_id", ["bcplus-100", "bcplus-1023", "bcplus-1068"])
+@pytest.mark.parametrize("question_id", ["bcplus-1023", "bcplus-1046"])
 @pytest.mark.parametrize("system", ["harness1", "gpt4o"])
 async def test_all_checked_in_stage_replays_complete(monkeypatch, question_id, system):
     async def no_delay(_seconds):
@@ -61,6 +61,10 @@ async def test_all_checked_in_stage_replays_complete(monkeypatch, question_id, s
     await manager.tasks[record.id]
 
     assert record.status == RunStatus.COMPLETED
-    assert record.result["answer_kind"] in {"seed_replay", "reference", "generated"}
+    assert record.result["answer_kind"] in {
+        "seed_replay",
+        "generated",
+        "generated_small_model",
+    }
     assert record.result["answer"]
     assert record.metrics is not None

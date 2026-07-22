@@ -1,9 +1,0 @@
-{"type":"state_snapshot","phase":"starting","payload":{"externalized":false,"message":"State remains inside the model context.","retrieved_document_count":0},"delay_ms":90}
-{"type":"tool_action","phase":"acting","payload":{"turn":1,"calls":[{"tool":"search_corpus","parameters":{"query":"A person who, in a specific year between 2010 and 2020, both years inclusive, was between forty-five and fifty"}}]},"delay_ms":90}
-{"type":"observation","phase":"observing","payload":{"turn":1,"summaries":["Retrieved a ranked candidate set from the same local demo slice."]},"delay_ms":90}
-{"type":"state_snapshot","phase":"updating_state","payload":{"externalized":false,"message":"State remains inside the model context.","retrieved_document_count":10},"delay_ms":90}
-{"type":"tool_action","phase":"acting","payload":{"turn":2,"calls":[{"tool":"read_document","parameters":{"document_id":"bcplus-100-evidence-1"}}]},"delay_ms":90}
-{"type":"observation","phase":"observing","payload":{"turn":2,"summaries":["Read the top evidence document inside the bounded tool loop."]},"delay_ms":90}
-{"type":"state_snapshot","phase":"updating_state","payload":{"externalized":false,"message":"State remains inside the model context.","retrieved_document_count":10},"delay_ms":90}
-{"type":"result","phase":"completed","payload":{"answer":"Phoenix New Times","answer_kind":"seed_replay","disclosure":"Deterministic stage-recovery fixture\u2014not a live model result or benchmark measurement.","retrieved_document_ids":["bcplus-100-evidence-1"]},"delay_ms":90}
-{"type":"metrics","phase":"completed","payload":{"total_seconds":7.8,"time_to_first_action_seconds":0.9,"model_inference_seconds":5.6,"retrieval_seconds":1.4,"prompt_tokens":4920,"completion_tokens":510,"completion_tokens_per_second":91.1,"action_count":2,"estimated_cost_usd":0.02,"cost_basis":"Illustrative fixture\u2014not live measured"},"delay_ms":90}

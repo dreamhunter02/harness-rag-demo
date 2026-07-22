@@ -46,6 +46,10 @@ describe("App", () => {
   it("offers both systems and visibly labels replay recovery", async () => {
     render(<App />);
     expect(await screen.findByRole("option", { name: /Dream above a desert town/ })).toBeInTheDocument();
+    expect(screen.getByText("Which newspaper published the article?")).toBeVisible();
+    fireEvent.click(screen.getByText("FULL QUESTION"));
+    expect(screen.getByText("Which newspaper published the article?")).not.toBeVisible();
+    fireEvent.click(screen.getByText("FULL QUESTION"));
     fireEvent.change(screen.getAllByRole("combobox")[1], { target: { value: "gpt4o" } });
     expect(screen.getByRole("option", { name: /GPT‑4o/ })).toBeInTheDocument();
 

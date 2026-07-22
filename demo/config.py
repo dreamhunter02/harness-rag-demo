@@ -17,8 +17,11 @@ class Settings(BaseSettings):
 
     harness1_base_url: str = "http://127.0.0.1:8001/v1"
     harness1_model: str = "harness-1"
-    harness1_timeout_seconds: int = 900
-    harness1_max_turns: int = 20
+    harness1_timeout_seconds: int = 90
+    harness1_max_turns: int = 12
+    harness1_max_generation_tokens: int = 768
+    retrieval_result_limit: int = 5
+    curated_document_limit: int = 12
     openai_api_key: str | None = None
     frontier_api_key: str | None = None
     frontier_base_url: str = "https://api.openai.com/v1"
@@ -35,7 +38,7 @@ class Settings(BaseSettings):
     demo_mode: str = "live"
     demo_data_dir: Path = ROOT / "data"
     demo_replay_dir: Path = ROOT / "fixtures" / "replays"
-    run_timeout_seconds: int = 180
+    run_timeout_seconds: int = 300
 
     @property
     def corpus_dir(self) -> Path:

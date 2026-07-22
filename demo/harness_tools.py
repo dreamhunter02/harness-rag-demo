@@ -5,6 +5,7 @@ from typing import Any, Optional
 from pydantic import PrivateAttr
 
 from demo.corpus import DemoCorpus
+from demo.retrieval_policy import RetrievalPolicy
 
 
 def _format_documents(documents) -> str:
@@ -15,7 +16,13 @@ def _format_documents(documents) -> str:
     )
 
 
-def build_harness_tools(corpus: DemoCorpus):
+def build_harness_tools(
+    corpus: DemoCorpus,
+    policy: RetrievalPolicy | None = None,
+    result_limit: int = 5,
+    question_id: str | None = None,
+    gold_document_ids: list[str] | None = None,
+):
     from harness.tools import (
         GREP_CORPUS_SCHEMA,
         READ_DOCUMENT_SCHEMA,
@@ -34,8 +41,18 @@ def build_harness_tools(corpus: DemoCorpus):
 
         def __call__(self, params: dict[Any, Any], overrides: Optional[dict] = None):
             query = str(params.get("query") or params.get("q") or "")
+            if policy and (reason := policy.reject_search(query)):
+                return reason, SearchCorpusToolCallMetadata(returned_chunk_ids=[])
             ignored = (overrides or {}).get("ignore_ids", [])
-            docs = self._demo_corpus.search(query, ignore_ids=ignored)
+            docs = self._demo_corpus.search(
+                query,
+                limit=result_limit,
+                ignore_ids=ignored,
+                scope_query_id=question_id,
+                scope_document_ids=gold_document_ids or (),
+            )
+            if policy:
+                policy.record_results([doc.chunk_id for doc in docs])
             return _format_documents(docs), SearchCorpusToolCallMetadata(
                 returned_chunk_ids=[doc.chunk_id for doc in docs]
             )
@@ -49,6 +66,8 @@ def build_harness_tools(corpus: DemoCorpus):
 
         def __call__(self, params: dict[Any, Any], overrides: Optional[dict] = None):
             doc_id = str(params.get("doc_id") or params.get("id") or "")
+            if policy:
+                policy.record_read(doc_id)
             return _format_documents(self._demo_corpus.read_document(doc_id)), None
 
     class DemoGrepTool(Tool):
