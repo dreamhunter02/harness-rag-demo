@@ -9,7 +9,7 @@ from demo.models import Metrics, SystemId
 @dataclass
 class Telemetry:
     system: SystemId
-    brev_hourly_usd: float = 0
+    harness_hourly_usd: float = 0
     gpt4o_input_per_million: float = 2.50
     gpt4o_output_per_million: float = 10.00
     pricing_effective_date: str = "2026-07-21"
@@ -43,9 +43,9 @@ class Telemetry:
             ) / 1_000_000
             basis = f"GPT-4o standard token rates configured {self.pricing_effective_date}."
         else:
-            cost = self.brev_hourly_usd * self.model_seconds / 3600
+            cost = self.harness_hourly_usd * self.model_seconds / 3600
             basis = (
-                f"Brev rate configured {self.pricing_effective_date}, allocated to model inference; "
+                f"Accelerator rate configured {self.pricing_effective_date}, allocated to inference; "
                 "excludes idle/warm-up/storage."
             )
         return Metrics(

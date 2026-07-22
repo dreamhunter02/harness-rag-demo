@@ -144,7 +144,7 @@ export default function App() {
         <label>
           <span>SYSTEM</span>
           <select value={system} onChange={(event) => setSystem(event.target.value as SystemId)} disabled={running}>
-            <option value="harness1">Harness-1 20B · Brev</option>
+            <option value="harness1">Harness-1 20B · Team DGX A100</option>
             <option value="gpt4o">GPT‑4o · OpenAI</option>
           </select>
         </label>

@@ -22,8 +22,8 @@ class Settings(BaseSettings):
     openai_api_key: str | None = None
     openai_frontier_model: str = "gpt-4o"
     openai_embedding_model: str = "text-embedding-3-small"
-    brev_instance_name: str | None = None
-    brev_hourly_usd: float = 0
+    harness1_remote_host: str = "teamdgxa100"
+    harness1_hourly_usd: float = 0
     pricing_effective_date: str = "2026-07-21"
     gpt4o_input_per_million_usd: float = 2.50
     gpt4o_output_per_million_usd: float = 10.00

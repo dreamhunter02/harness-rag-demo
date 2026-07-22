@@ -24,7 +24,7 @@ def test_gpt_cost_and_metrics_are_aggregated():
 
 
 def test_harness_cost_uses_only_measured_inference_allocation():
-    telemetry = Telemetry(SystemId.HARNESS1, brev_hourly_usd=3.0)
+    telemetry = Telemetry(SystemId.HARNESS1, harness_hourly_usd=3.0)
     with patch("demo.telemetry.perf_counter", side_effect=[1.0, 121.0]):
         telemetry.start()
         telemetry.model_seconds = 120

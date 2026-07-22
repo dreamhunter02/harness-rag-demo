@@ -31,8 +31,8 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-if [[ -n "${BREV_INSTANCE_NAME:-}" ]] && ! nc -z 127.0.0.1 8001 2>/dev/null; then
-  scripts/brev/tunnel.sh "$BREV_INSTANCE_NAME" &
+if [[ -n "${HARNESS1_REMOTE_HOST:-}" ]] && ! nc -z 127.0.0.1 8001 2>/dev/null; then
+  scripts/dgx/tunnel.sh "$HARNESS1_REMOTE_HOST" &
   TUNNEL_PID=$!
 fi
 

@@ -163,7 +163,7 @@ class Harness1Runner:
         dataset = DemoDataset(question)
         telemetry = Telemetry(
             SystemId.HARNESS1,
-            brev_hourly_usd=self.settings.brev_hourly_usd,
+            harness_hourly_usd=self.settings.harness1_hourly_usd,
             pricing_effective_date=self.settings.pricing_effective_date,
         )
         telemetry.start()
