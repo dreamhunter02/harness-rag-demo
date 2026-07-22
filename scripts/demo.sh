@@ -18,8 +18,15 @@ fi
 
 UV_BIN="${UV_BIN:-$(command -v uv || true)}"
 PNPM_BIN="${PNPM_BIN:-$(command -v pnpm || true)}"
+NODE_BIN="${NODE_BIN:-$(command -v node || true)}"
+if [[ -z "$NODE_BIN" ]] && [[ -n "$PNPM_BIN" ]]; then
+  BUNDLED_NODE="$(cd "$(dirname "$PNPM_BIN")/../../node/bin" 2>/dev/null && pwd)/node"
+  [[ ! -x "$BUNDLED_NODE" ]] || NODE_BIN="$BUNDLED_NODE"
+fi
 [[ -n "$UV_BIN" ]] || { echo "uv is required: https://docs.astral.sh/uv/"; exit 1; }
 [[ -n "$PNPM_BIN" ]] || { echo "pnpm is required: https://pnpm.io/installation"; exit 1; }
+[[ -n "$NODE_BIN" ]] || { echo "Node.js is required: https://nodejs.org/"; exit 1; }
+export PATH="$(dirname "$NODE_BIN"):$PATH"
 
 "$UV_BIN" sync --group dev
 "$PNPM_BIN" --dir frontend install --frozen-lockfile
