@@ -24,6 +24,8 @@ export default function App() {
   const [status, setStatus] = useState<RunStatus>("idle");
   const [actions, setActions] = useState<ActionStep[]>([]);
   const [snapshot, setSnapshot] = useState<HarnessSnapshot>({});
+  const [snapshotHistory, setSnapshotHistory] = useState<HarnessSnapshot[]>([]);
+  const [snapshotIndex, setSnapshotIndex] = useState<number | null>(null);
   const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [result, setResult] = useState<ResultPayload | null>(null);
   const [runId, setRunId] = useState<string | null>(null);
@@ -33,6 +35,7 @@ export default function App() {
   const [health, setHealth] = useState<Record<string, unknown> | null>(null);
   const sourceRef = useRef<EventSource | null>(null);
   const seenSequences = useRef(new Set<number>());
+  const latestActionTurn = useRef(0);
 
   useEffect(() => {
     getQuestions().then((items) => {
@@ -49,8 +52,11 @@ export default function App() {
   function resetRun(nextMode: RunMode) {
     sourceRef.current?.close();
     seenSequences.current.clear();
+    latestActionTurn.current = 0;
     setActions([]);
     setSnapshot(system === "gpt4o" ? { externalized: false, message: "State remains inside the model context." } : {});
+    setSnapshotHistory([]);
+    setSnapshotIndex(null);
     setMetrics(null);
     setResult(null);
     setError(null);
@@ -93,6 +99,7 @@ export default function App() {
       if (["completed", "error", "cancelled"].includes(next)) sourceRef.current?.close();
     } else if (event.type === "tool_action") {
       const turn = Number(event.payload.turn ?? 0);
+      latestActionTurn.current = turn;
       const calls = (event.payload.calls ?? []) as Array<{ tool: string; parameters: Record<string, unknown> }>;
       const timestamp = event.timestamp;
       setActions((current) => [...current, ...calls.map((call) => ({ turn, ...call, timestamp }))]);
@@ -102,7 +109,12 @@ export default function App() {
         index === current.length - 1 && summaries?.[0] ? { ...item, summary: summaries[0] } : item
       )));
     } else if (event.type === "state_snapshot") {
-      setSnapshot(event.payload as HarnessSnapshot);
+      const nextSnapshot = {
+        ...(event.payload as HarnessSnapshot),
+        turn: latestActionTurn.current || Number(event.payload.turn ?? 0),
+      };
+      setSnapshot(nextSnapshot);
+      setSnapshotHistory((current) => [...current, nextSnapshot]);
     } else if (event.type === "metrics") {
       setMetrics(event.payload as unknown as Metrics);
     } else if (event.type === "result") {
@@ -122,6 +134,23 @@ export default function App() {
   }
 
   const healthLabel = health?.status === "ready" ? "All systems ready" : health ? "Setup incomplete" : "Backend unavailable";
+  const displayedSnapshot = snapshotIndex === null
+    ? snapshot
+    : snapshotHistory[snapshotIndex] ?? snapshot;
+  const displayedSnapshotIndex = snapshotIndex === null
+    ? snapshotHistory.length - 1
+    : snapshotIndex;
+
+  function showPreviousSnapshot() {
+    if (snapshotHistory.length < 2) return;
+    setSnapshotIndex(Math.max(0, displayedSnapshotIndex - 1));
+  }
+
+  function showNextSnapshot() {
+    if (snapshotIndex === null) return;
+    const nextIndex = snapshotIndex + 1;
+    setSnapshotIndex(nextIndex >= snapshotHistory.length - 1 ? null : nextIndex);
+  }
 
   return (
     <main className="app-shell">
@@ -172,8 +201,16 @@ export default function App() {
       ) : null}
 
       <section className="workspace">
-        <ActionTrajectory actions={actions} running={running} />
-        <HarnessState snapshot={snapshot} system={system} />
+        <ActionTrajectory actions={actions} running={running} selectedTurn={displayedSnapshot.turn} />
+        <HarnessState
+          snapshot={displayedSnapshot}
+          system={system}
+          onPrevious={showPreviousSnapshot}
+          onNext={showNextSnapshot}
+          canGoPrevious={displayedSnapshotIndex > 0}
+          canGoNext={snapshotIndex !== null && snapshotIndex < snapshotHistory.length - 1}
+          viewingHistory={snapshotIndex !== null}
+        />
       </section>
 
       <MetricsStrip result={result} metrics={metrics} />

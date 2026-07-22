@@ -1,7 +1,15 @@
 import { useEffect, useRef } from "react";
 import type { ActionStep } from "../types";
 
-export function ActionTrajectory({ actions, running }: { actions: ActionStep[]; running: boolean }) {
+export function ActionTrajectory({
+  actions,
+  running,
+  selectedTurn,
+}: {
+  actions: ActionStep[];
+  running: boolean;
+  selectedTurn?: number;
+}) {
   const trajectoryRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -15,6 +23,17 @@ export function ActionTrajectory({ actions, running }: { actions: ActionStep[]; 
     }
   }, [actions, running]);
 
+  useEffect(() => {
+    if (selectedTurn === undefined) return;
+    const trajectory = trajectoryRef.current;
+    const selected = trajectory?.querySelector<HTMLElement>(`[data-turn="${selectedTurn}"]`);
+    if (!trajectory || !selected) return;
+    trajectory.scrollTo({
+      top: selected.offsetTop - trajectory.clientHeight / 2 + selected.clientHeight / 2,
+      behavior: "smooth",
+    });
+  }, [selectedTurn]);
+
   return (
     <section className="workspace-panel trajectory-panel" aria-labelledby="trajectory-title">
       <h2 id="trajectory-title">ACTION TRAJECTORY</h2>
@@ -27,7 +46,8 @@ export function ActionTrajectory({ actions, running }: { actions: ActionStep[]; 
         ) : (
           actions.map((action, index) => (
             <article
-              className={`trajectory-step ${running && index === actions.length - 1 ? "active" : "complete"}`}
+              className={`trajectory-step ${action.turn === selectedTurn ? "active" : "complete"}`}
+              data-turn={action.turn}
               key={`${action.turn}-${index}-${action.tool}`}
             >
               <span className="step-node" aria-hidden="true" />

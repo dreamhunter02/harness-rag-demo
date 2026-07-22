@@ -1,12 +1,36 @@
 import type { HarnessSnapshot, SystemId } from "../types";
 
-export function HarnessState({ snapshot, system }: { snapshot: HarnessSnapshot; system: SystemId }) {
+type HarnessStateProps = {
+  snapshot: HarnessSnapshot;
+  system: SystemId;
+  onPrevious?: () => void;
+  onNext?: () => void;
+  canGoPrevious?: boolean;
+  canGoNext?: boolean;
+  viewingHistory?: boolean;
+};
+
+export function HarnessState({
+  snapshot,
+  system,
+  onPrevious,
+  onNext,
+  canGoPrevious = false,
+  canGoNext = false,
+  viewingHistory = false,
+}: HarnessStateProps) {
   const inactive = system === "gpt4o" || snapshot.externalized === false;
   return (
     <section className={`workspace-panel state-panel ${inactive ? "internal-state" : ""}`} aria-labelledby="state-title">
       <div className="panel-title-row">
         <h2 id="state-title">HARNESS STATE</h2>
-        {!inactive && snapshot.turn !== undefined ? <span>turn {snapshot.turn}</span> : null}
+        {!inactive ? (
+          <div className="turn-navigation" aria-label="Harness state turn navigation">
+            <button type="button" onClick={onPrevious} disabled={!canGoPrevious} aria-label="Previous turn">&lt;</button>
+            <span>{viewingHistory ? "history" : "live"} · turn {snapshot.turn ?? 0}</span>
+            <button type="button" onClick={onNext} disabled={!canGoNext} aria-label="Next turn">&gt;</button>
+          </div>
+        ) : null}
       </div>
       {inactive ? (
         <div className="internal-message">
