@@ -6,6 +6,8 @@ The presentation workstation hosts the UI, API, retrieval index, and harness sta
 
 ## Demo walkthrough
 
+[Watch or download the complete Harness-1 demo (3:23)](docs/media/harness-1-demo.mov)
+
 ### Ready
 
 Choose one of the prevalidated BrowseComp+ Demo Slice questions and either Harness-1 20B or GPT-4o mini.
