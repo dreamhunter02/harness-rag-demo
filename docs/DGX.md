@@ -23,13 +23,21 @@ The root filesystem is full, so all persistent model data must stay under
 scripts/dgx/deploy.sh
 scripts/dgx/health.sh
 scripts/dgx/tunnel.sh
+scripts/dgx/smoke.sh
+scripts/dgx/logs.sh
+scripts/dgx/stop.sh
+scripts/dgx/start.sh
 ```
 
 The deploy script replaces only the `harness1-vllm` container. Before deploying,
 confirm the configured GPU is still free with `nvidia-smi` and never select GPUs
 occupied by another user's process.
 
-To inspect logs:
+The smoke test validates the exact raw token-ID contract used by the Harness
+runner. `stop.sh` releases the shared GPU without deleting the downloaded model,
+and `start.sh` reuses that retained container and checkpoint.
+
+To inspect logs directly:
 
 ```bash
 ssh teamdgxa100 docker logs --tail 100 -f harness1-vllm
