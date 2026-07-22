@@ -161,7 +161,11 @@ class Harness1Runner:
         toolset.add_tool(grep)
         encoding = tiktoken.get_encoding("o200k_harmony")
         dataset = DemoDataset(question)
-        telemetry = Telemetry(SystemId.HARNESS1, brev_hourly_usd=self.settings.brev_hourly_usd)
+        telemetry = Telemetry(
+            SystemId.HARNESS1,
+            brev_hourly_usd=self.settings.brev_hourly_usd,
+            pricing_effective_date=self.settings.pricing_effective_date,
+        )
         telemetry.start()
         policy = VllmTokenPolicy(self.settings, telemetry)
         env = SlidingWindowSearchEnv(

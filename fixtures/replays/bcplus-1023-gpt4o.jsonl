@@ -1,0 +1,9 @@
+{"type":"state_snapshot","phase":"starting","payload":{"externalized":false,"message":"State remains inside the model context.","retrieved_document_count":0},"delay_ms":90}
+{"type":"tool_action","phase":"acting","payload":{"turn":1,"calls":[{"tool":"search_corpus","parameters":{"query":"There was a fashion accessory that was developed after an American person developed a machine sometime after 1"}}]},"delay_ms":90}
+{"type":"observation","phase":"observing","payload":{"turn":1,"summaries":["Retrieved a ranked candidate set from the same local demo slice."]},"delay_ms":90}
+{"type":"state_snapshot","phase":"updating_state","payload":{"externalized":false,"message":"State remains inside the model context.","retrieved_document_count":10},"delay_ms":90}
+{"type":"tool_action","phase":"acting","payload":{"turn":2,"calls":[{"tool":"read_document","parameters":{"document_id":"bcplus-1023-evidence-1"}}]},"delay_ms":90}
+{"type":"observation","phase":"observing","payload":{"turn":2,"summaries":["Read the top evidence document inside the bounded tool loop."]},"delay_ms":90}
+{"type":"state_snapshot","phase":"updating_state","payload":{"externalized":false,"message":"State remains inside the model context.","retrieved_document_count":10},"delay_ms":90}
+{"type":"result","phase":"completed","payload":{"answer":"Run live to synthesize the final answer from retrieved evidence.","answer_kind":"seed_replay","disclosure":"Deterministic stage-recovery fixture\u2014not a live model result or benchmark measurement.","retrieved_document_ids":["bcplus-1023-evidence-1"]},"delay_ms":90}
+{"type":"metrics","phase":"completed","payload":{"total_seconds":8.8,"time_to_first_action_seconds":1.0,"model_inference_seconds":6.6,"retrieval_seconds":1.4,"prompt_tokens":5100,"completion_tokens":550,"completion_tokens_per_second":91.1,"action_count":2,"estimated_cost_usd":0.021,"cost_basis":"Illustrative fixture\u2014not live measured"},"delay_ms":90}

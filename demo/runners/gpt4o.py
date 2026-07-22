@@ -60,7 +60,12 @@ class GPT4ORunner:
             raise RuntimeError("OPENAI_API_KEY is required for GPT-4o live mode")
         corpus = DemoCorpus(self.settings)
         client = AsyncOpenAI(api_key=self.settings.openai_api_key)
-        telemetry = Telemetry(SystemId.GPT4O)
+        telemetry = Telemetry(
+            SystemId.GPT4O,
+            gpt4o_input_per_million=self.settings.gpt4o_input_per_million_usd,
+            gpt4o_output_per_million=self.settings.gpt4o_output_per_million_usd,
+            pricing_effective_date=self.settings.pricing_effective_date,
+        )
         telemetry.start()
         messages: list[dict[str, Any]] = [
             {

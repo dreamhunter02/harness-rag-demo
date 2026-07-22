@@ -109,6 +109,16 @@ class RunManager:
         except asyncio.CancelledError:
             record.status = RunStatus.CANCELLED
             await self._emit(record, EventType.STATUS, "cancelled", {"status": "cancelled"})
+        except TimeoutError:
+            record.status = RunStatus.ERROR
+            record.error = f"Run exceeded the {self.settings.run_timeout_seconds}s timeout"
+            await self._emit(
+                record,
+                EventType.ERROR,
+                "error",
+                {"message": record.error, "replay_available": self.replay_exists(record)},
+            )
+            await self._emit(record, EventType.STATUS, "error", {"status": "error"})
         except Exception as exc:
             record.status = RunStatus.ERROR
             record.error = str(exc)[:500]

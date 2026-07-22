@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     openai_embedding_model: str = "text-embedding-3-small"
     brev_instance_name: str | None = None
     brev_hourly_usd: float = 0
+    pricing_effective_date: str = "2026-07-21"
+    gpt4o_input_per_million_usd: float = 2.50
+    gpt4o_output_per_million_usd: float = 10.00
     demo_mode: str = "live"
     demo_data_dir: Path = ROOT / "data"
     demo_replay_dir: Path = ROOT / "fixtures" / "replays"

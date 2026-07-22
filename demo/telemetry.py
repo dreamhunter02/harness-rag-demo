@@ -12,6 +12,7 @@ class Telemetry:
     brev_hourly_usd: float = 0
     gpt4o_input_per_million: float = 2.50
     gpt4o_output_per_million: float = 10.00
+    pricing_effective_date: str = "2026-07-21"
     started_at: float = 0
     first_action_at: float | None = None
     model_seconds: float = 0
@@ -40,10 +41,13 @@ class Telemetry:
                 self.prompt_tokens * self.gpt4o_input_per_million
                 + self.completion_tokens * self.gpt4o_output_per_million
             ) / 1_000_000
-            basis = "Configured GPT-4o token rates; verify against current OpenAI pricing."
+            basis = f"GPT-4o standard token rates configured {self.pricing_effective_date}."
         else:
             cost = self.brev_hourly_usd * self.model_seconds / 3600
-            basis = "Brev hourly rate allocated to model inference time; excludes idle/warm-up/storage."
+            basis = (
+                f"Brev rate configured {self.pricing_effective_date}, allocated to model inference; "
+                "excludes idle/warm-up/storage."
+            )
         return Metrics(
             total_seconds=round(total, 3),
             time_to_first_action_seconds=None if ttfa is None else round(ttfa, 3),
