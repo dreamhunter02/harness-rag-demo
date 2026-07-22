@@ -83,22 +83,24 @@ h1 { margin: 0; font-size: clamp(28px, 2.45vw, 48px); line-height: 1; letter-spa
 .step-copy p { margin: 9px 0 0; color: #575951; font-size: 13px; line-height: 1.4; max-height: 3.7em; overflow: hidden; }
 
 .state-grid { height: calc(100% - 38px); display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(2, minmax(160px, 1fr)); gap: 11px; }
-.state-cell { position: relative; min-width: 0; padding: 18px 18px 34px; border: 1px solid #c7c8c1; border-radius: 5px; background: rgba(255,255,255,.45); overflow: hidden; transition: border-color .25s, background .25s; }
+.state-cell { position: relative; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 18px 10px 34px 18px; border: 1px solid #c7c8c1; border-radius: 5px; background: rgba(255,255,255,.45); overflow: hidden; transition: border-color .25s, background .25s; }
 .state-cell.populated { border-color: #a5b879; background: rgba(249,252,241,.82); }
 .state-cell.featured.populated { border-color: var(--green-bright); background: var(--green-pale); }
-.state-cell h3 { margin: 0 0 13px; font-size: 15px; text-transform: lowercase; }
-.document-list, .graph-list, .verification-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 7px; font-size: 12px; }
+.state-cell h3 { flex: none; margin: 0 0 13px; padding-right: 8px; font-size: 17px; text-transform: lowercase; }
+.state-cell-content { flex: 1; min-height: 0; padding-right: 8px; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
+.state-cell-content:focus-visible { outline: 2px solid rgba(118, 169, 0, .5); outline-offset: -2px; }
+.document-list, .graph-list, .verification-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 9px; font-size: 14px; }
 .document-list li { display: flex; justify-content: space-between; gap: 8px; color: #353630; white-space: nowrap; overflow: hidden; }
 .document-list li span { overflow: hidden; text-overflow: ellipsis; }
 .document-list em { color: var(--green); font-style: normal; }
-.cell-foot { position: absolute; left: 18px; bottom: 13px; color: #777970; font-size: 10px; }
+.cell-foot { position: absolute; left: 18px; bottom: 13px; color: #666860; font-size: 12px; }
 .graph-list li { display: flex; justify-content: space-between; gap: 8px; border-left: 2px solid var(--green-bright); padding-left: 8px; }
 .graph-list span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.graph-list small { flex: none; color: var(--green); }
+.graph-list small { flex: none; color: var(--green); font-size: 12px; }
 .verification-list li { display: flex; gap: 7px; line-height: 1.3; max-height: 2.6em; overflow: hidden; }
 .check { color: var(--green); font-weight: 900; }
-.compression-copy { margin: 0; font-size: 12px; line-height: 1.45; max-height: 8.7em; overflow: hidden; }
-.budget strong { display: block; margin: 20px 0 12px; color: var(--green); font-size: 17px; }
+.compression-copy { margin: 0; font-size: 14px; line-height: 1.5; }
+.budget strong { display: block; margin: 20px 0 12px; color: var(--green); font-size: 20px; }
 .budget-track { height: 14px; border: 1px solid #c6c8c0; background: #edeee9; }
 .budget-track span { display: block; height: 100%; background: var(--green); transition: width .35s ease; }
 .internal-state { display: flex; flex-direction: column; }

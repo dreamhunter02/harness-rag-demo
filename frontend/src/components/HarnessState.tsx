@@ -41,12 +41,12 @@ export function HarnessState({
       ) : (
         <div className="state-grid" aria-live="polite">
           <StateCell title="candidate pool" active={Boolean(snapshot.candidate_pool?.length)}>
-            <DocumentList items={snapshot.candidate_pool?.slice(-5).map((item) => item.id) ?? []} />
+            <DocumentList items={snapshot.candidate_pool?.map((item) => item.id) ?? []} />
             <CellCount count={snapshot.candidate_pool?.length ?? 0} noun="candidate" />
           </StateCell>
           <StateCell title="curated set" active={Boolean(snapshot.curated_set?.length)} featured>
             <ul className="document-list">
-              {snapshot.curated_set?.slice(0, 5).map((item) => (
+              {snapshot.curated_set?.map((item) => (
                 <li key={item.id}><span>{item.id}</span><em>{item.importance ?? "fair"}</em></li>
               ))}
             </ul>
@@ -54,7 +54,7 @@ export function HarnessState({
           </StateCell>
           <StateCell title="evidence graph" active={Boolean(snapshot.evidence_graph?.length)}>
             <ul className="graph-list">
-              {snapshot.evidence_graph?.slice(0, 3).map((item) => (
+              {snapshot.evidence_graph?.map((item) => (
                 <li key={item.entity}><span>{item.entity}</span><small>{item.document_ids.length} links</small></li>
               ))}
             </ul>
@@ -62,7 +62,7 @@ export function HarnessState({
           </StateCell>
           <StateCell title="verification" active={Boolean(snapshot.verification?.length)}>
             <ul className="verification-list">
-              {snapshot.verification?.slice(-3).map((item, index) => (
+              {snapshot.verification?.map((item, index) => (
                 <li key={`${item.claim}-${index}`}><span className="check">✓</span>{item.claim}</li>
               ))}
             </ul>
@@ -82,7 +82,12 @@ export function HarnessState({
 }
 
 function StateCell({ title, active, featured, children }: { title: string; active: boolean; featured?: boolean; children: React.ReactNode }) {
-  return <article className={`state-cell ${active ? "populated" : ""} ${featured ? "featured" : ""}`}><h3>{title}</h3>{children}</article>;
+  return (
+    <article className={`state-cell ${active ? "populated" : ""} ${featured ? "featured" : ""}`}>
+      <h3>{title}</h3>
+      <div className="state-cell-content" tabIndex={0}>{children}</div>
+    </article>
+  );
 }
 
 function DocumentList({ items }: { items: string[] }) {
