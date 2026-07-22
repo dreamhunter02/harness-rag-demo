@@ -1,6 +1,6 @@
 """Generate deterministic, visibly disclosed stage-recovery fixtures.
 
-These fixtures make failure recovery testable before credentials and a Brev GPU are
+These fixtures make failure recovery testable before credentials and a remote GPU are
 available. A successful live run replaces its matching fixture automatically.
 """
 

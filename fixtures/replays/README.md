@@ -4,6 +4,6 @@ The checked-in JSONL files are deterministic stage-recovery fixtures generated b
 `scripts/generate_seed_replays.py`. They are visibly labeled in the UI and must not
 be presented as live outputs or benchmark measurements.
 
-After credentials, the local corpus, and Brev inference are configured, each
+After credentials, the local corpus, and remote inference are configured, each
 successful live question/system run automatically replaces its matching fixture.
 Before the event, run all six combinations live and commit the captured replacements.

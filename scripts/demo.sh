@@ -38,8 +38,8 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-if [[ -n "${HARNESS1_REMOTE_HOST:-}" ]] && ! nc -z 127.0.0.1 8001 2>/dev/null; then
-  scripts/dgx/tunnel.sh "$HARNESS1_REMOTE_HOST" &
+if [[ -n "${HARNESS1_REMOTE_HOST:-}" ]] && ! nc -z 127.0.0.1 "${HARNESS1_LOCAL_PORT:-8001}" 2>/dev/null; then
+  scripts/remote/tunnel.sh "$HARNESS1_REMOTE_HOST" &
   TUNNEL_PID=$!
 fi
 

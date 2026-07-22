@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     embedding_api_key: str | None = None
     embedding_base_url: str = "https://api.openai.com/v1"
     embedding_concurrency: int = 4
-    harness1_remote_host: str = "teamdgxa100"
+    harness1_remote_host: str | None = None
     harness1_hourly_usd: float = 0
     pricing_effective_date: str = "2026-07-21"
     frontier_input_per_million_usd: float = 0.15

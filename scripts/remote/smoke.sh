@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# shellcheck source=common.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 BASE_URL="${HARNESS1_BASE_URL:-http://127.0.0.1:8001/v1}"
 python3 - "$BASE_URL" <<'PY'
 import json
