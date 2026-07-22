@@ -54,11 +54,15 @@ class DemoCorpus:
         self.bm25 = BM25Okapi([tokenize(doc.text) for doc in self.documents])
         self.chroma = chromadb.PersistentClient(path=str(settings.chroma_dir))
         self.collection = self.chroma.get_collection(COLLECTION_NAME)
-        self.openai = OpenAI(
-            api_key=settings.resolved_embedding_api_key,
-            base_url=settings.embedding_base_url,
-            timeout=60,
-            max_retries=3,
+        self.openai = (
+            OpenAI(
+                api_key=settings.resolved_embedding_api_key,
+                base_url=settings.embedding_base_url,
+                timeout=60,
+                max_retries=3,
+            )
+            if settings.resolved_embedding_api_key
+            else None
         )
 
     def search(
@@ -70,13 +74,17 @@ class DemoCorpus:
         scope_document_ids: Iterable[str] = (),
     ) -> list[CorpusDocument]:
         ignored = set(ignore_ids)
-        embedding = self.openai.embeddings.create(
-            model=self.settings.openai_embedding_model,
-            input=[query],
-            encoding_format="float",
-        ).data[0].embedding
-        dense = self.collection.query(query_embeddings=[embedding], n_results=min(50, len(self.documents)))
-        dense_ids = list(dense.get("ids", [[]])[0])
+        dense_ids: list[str] = []
+        if self.openai is not None:
+            embedding = self.openai.embeddings.create(
+                model=self.settings.openai_embedding_model,
+                input=[query],
+                encoding_format="float",
+            ).data[0].embedding
+            dense = self.collection.query(
+                query_embeddings=[embedding], n_results=min(50, len(self.documents))
+            )
+            dense_ids = list(dense.get("ids", [[]])[0])
         lexical_scores = self.bm25.get_scores(tokenize(query))
         lexical_order = sorted(range(len(lexical_scores)), key=lexical_scores.__getitem__, reverse=True)[:50]
         lexical_ids = [self.documents[index].chunk_id for index in lexical_order]
