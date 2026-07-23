@@ -19,14 +19,18 @@ button, select { font: inherit; }
 button:focus-visible, select:focus-visible { outline: 3px solid rgba(118, 169, 0, .32); outline-offset: 2px; }
 
 .app-shell { min-height: 100vh; padding: 28px 34px 24px; display: flex; flex-direction: column; gap: 18px; }
-.app-header { display: flex; align-items: center; justify-content: space-between; padding: 0 10px 18px; border-bottom: 1px solid #aeb0a9; }
+.app-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 0 10px 18px; border-bottom: 1px solid #aeb0a9; }
 .title-lockup { display: flex; align-items: center; gap: 18px; }
 .green-rule { width: 50px; height: 6px; background: var(--green-bright); }
 h1 { margin: 0; font-size: clamp(28px, 2.45vw, 48px); line-height: 1; letter-spacing: -.035em; }
+.header-tools { display: flex; align-items: center; gap: 20px; }
 .connection-status { display: flex; align-items: center; gap: 9px; font-size: 15px; color: var(--muted); }
 .connection-status.ready { color: var(--green); }
 .status-dot { width: 10px; height: 10px; border-radius: 50%; background: #a0a29b; }
 .connection-status.ready .status-dot { background: var(--green-bright); }
+.repo-qr { width: 150px; display: grid; gap: 4px; margin: 0; padding: 5px; border: 1px solid #b9c995; border-radius: 4px; background: var(--surface); text-align: center; }
+.repo-qr img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
+.repo-qr figcaption { color: var(--green); font-size: 8px; font-weight: 850; letter-spacing: .06em; line-height: 1.2; }
 
 .replay-banner { margin: -1px 0 -4px; padding: 8px 12px; background: #20211e; color: white; text-align: center; font-weight: 800; letter-spacing: .14em; font-size: 12px; }
 .run-controls { display: grid; grid-template-columns: 1.35fr 1fr .74fr; gap: 28px; align-items: end; padding: 8px 10px 4px; }
@@ -143,6 +147,9 @@ footer span:first-child { color: var(--green); font-weight: 850; letter-spacing:
 
 @media (max-width: 1050px) {
   .app-shell { padding: 18px; }
+  .app-header { align-items: flex-start; }
+  .header-tools { gap: 12px; }
+  .repo-qr { width: 92px; }
   .run-controls { grid-template-columns: 1fr 1fr; gap: 14px; }
   .run-button { grid-column: 1 / -1; }
   .workspace { height: auto; grid-template-columns: 1fr; overflow: visible; }

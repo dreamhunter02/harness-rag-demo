@@ -3,6 +3,7 @@ import { cancelRun, createRun, getHealth, getQuestions } from "./api";
 import { ActionTrajectory } from "./components/ActionTrajectory";
 import { HarnessState } from "./components/HarnessState";
 import { MetricsStrip } from "./components/MetricsStrip";
+import demoRepoQr from "./assets/demo-repo-qr.png";
 import type {
   ActionStep,
   DemoEvent,
@@ -156,8 +157,14 @@ export default function App() {
     <main className="app-shell">
       <header className="app-header">
         <div className="title-lockup"><span className="green-rule" /><h1>Harness-1 · Live Search Demo</h1></div>
-        <div className={`connection-status ${health?.status === "ready" ? "ready" : "degraded"}`}>
-          <span className="status-dot" />{healthLabel}
+        <div className="header-tools">
+          <div className={`connection-status ${health?.status === "ready" ? "ready" : "degraded"}`}>
+            <span className="status-dot" />{healthLabel}
+          </div>
+          <figure className="repo-qr">
+            <img src={demoRepoQr} alt="QR code for the Harness-1 live demo repository" />
+            <figcaption>SCAN FOR DEMO REPO</figcaption>
+          </figure>
         </div>
       </header>
 
