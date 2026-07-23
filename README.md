@@ -6,7 +6,9 @@ The presentation workstation hosts the UI, API, retrieval index, and harness sta
 
 ## Demo walkthrough
 
-[Watch or download the complete Harness-1 demo (3:23)](docs/media/harness-1-demo.mov)
+[![Watch: This 20B Model Solves Multi-Step Search with a Harness](docs/screenshots/youtube-thumbnail.jpg)](https://youtu.be/eteOcGzv5mE)
+
+**[Watch the complete Harness-1 live demo on YouTube (3:23)](https://youtu.be/eteOcGzv5mE)**
 
 ### Ready
 
