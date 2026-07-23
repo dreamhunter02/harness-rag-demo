@@ -156,7 +156,15 @@ export default function App() {
   return (
     <main className="app-shell">
       <header className="app-header">
-        <div className="title-lockup"><span className="green-rule" /><h1>Harness-1 · Live Search Demo</h1></div>
+        <div className="title-lockup">
+          <span className="green-rule" />
+          <div className="title-copy">
+            <h1>Harness-1 · Live Search Demo</h1>
+            <a className="repo-link" href="https://github.com/dreamhunter02/harness-rag-demo" target="_blank" rel="noreferrer">
+              github.com/dreamhunter02/harness-rag-demo
+            </a>
+          </div>
+        </div>
         <div className="header-tools">
           <div className={`connection-status ${health?.status === "ready" ? "ready" : "degraded"}`}>
             <span className="status-dot" />{healthLabel}
