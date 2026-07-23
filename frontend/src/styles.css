@@ -24,7 +24,7 @@ button:focus-visible, select:focus-visible { outline: 3px solid rgba(118, 169, 0
 .title-copy { display: grid; gap: 7px; }
 .green-rule { width: 50px; height: 6px; background: var(--green-bright); }
 h1 { margin: 0; font-size: clamp(28px, 2.45vw, 48px); line-height: 1; letter-spacing: -.035em; }
-.repo-link { color: var(--muted); font-size: 12px; line-height: 1; letter-spacing: .015em; text-decoration: none; }
+.repo-link { color: var(--muted); font-size: clamp(17px, 1.47vw, 29px); line-height: 1; letter-spacing: .015em; text-decoration: none; }
 .repo-link:hover, .repo-link:focus-visible { color: var(--green); text-decoration: underline; }
 .header-tools { display: flex; align-items: center; gap: 20px; }
 .connection-status { display: flex; align-items: center; gap: 9px; font-size: 15px; color: var(--muted); }
